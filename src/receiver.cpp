@@ -8,7 +8,6 @@ int main() {
     constexpr unsigned short PORT = 5000;
     constexpr int BUFFER_SIZE = 1024;
 
-    // Winsock must be initialized before creating a socket.
     WSADATA winsockData{};
     int startupResult = WSAStartup(MAKEWORD(2, 2), &winsockData);
     if (startupResult != 0) {
@@ -23,7 +22,6 @@ int main() {
         return 1;
     }
 
-    // Start on localhost; both programs run on the same computer.
     sockaddr_in receiverAddress{};
     receiverAddress.sin_family = AF_INET;
     receiverAddress.sin_port = htons(PORT);
@@ -55,7 +53,6 @@ int main() {
         return 1;
     }
 
-    // UDP data need not end with a null character; use the byte count.
     cout << "Received " << receivedBytes << " bytes: ";
     cout.write(buffer, receivedBytes);
     cout << '\n';

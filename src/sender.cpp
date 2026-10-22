@@ -22,7 +22,6 @@ int main() {
         return 1;
     }
 
-    // Bound the wait for a reply; UDP itself does not retry a lost message.
     DWORD timeoutMs = 3000;
     if (setsockopt(senderSocket, SOL_SOCKET, SO_RCVTIMEO,
                    reinterpret_cast<const char*>(&timeoutMs),
@@ -66,7 +65,7 @@ int main() {
     bool success = false;
     if (receivedBytes == SOCKET_ERROR) {
         cerr << "recvfrom failed: " << WSAGetLastError()
-                  << ". Start the receiver first.\n";
+             << ". Start the receiver first.\n";
     } else if (replyAddress.sin_addr.s_addr != receiverAddress.sin_addr.s_addr ||
                replyAddress.sin_port != receiverAddress.sin_port) {
         cerr << "Reply came from an unexpected endpoint\n";
