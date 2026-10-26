@@ -2,9 +2,7 @@
 
 using namespace std;
 
-uint32_t calculateCrc32(const char* data, int length) {
-    uint32_t crc = 0xffffffffu;
-
+uint32_t updateCrc32(uint32_t crc, const char* data, int length) {
     for (int i = 0; i < length; i++) {
         crc ^= static_cast<unsigned char>(data[i]);
 
@@ -17,5 +15,9 @@ uint32_t calculateCrc32(const char* data, int length) {
         }
     }
 
-    return ~crc;
+    return crc;
+}
+
+uint32_t calculateCrc32(const char* data, int length) {
+    return ~updateCrc32(0xffffffffu, data, length);
 }

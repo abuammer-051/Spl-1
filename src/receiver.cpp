@@ -5,13 +5,19 @@
 
 using namespace std;
 
+bool receiveFile(SOCKET sock, const char* path);
+
 int makePacket(char* buffer, int capacity, uint8_t type, uint32_t transferId,
                uint32_t sequence, const char* data, uint16_t dataLength);
 bool readPacket(const char* buffer, int packetLength, uint8_t& type,
                 uint32_t& transferId, uint32_t& sequence, char* data,
                 int capacity, uint16_t& dataLength);
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 1 && argc != 2) {
+        cerr << "Usage: receiver [output file]\n";
+        return 1;
+    }
     constexpr unsigned short PORT = 5000;
     constexpr int BUFFER_SIZE = 1044;
 
@@ -41,6 +47,14 @@ int main() {
         closesocket(receiverSocket);
         WSACleanup();
         return 1;
+    }
+
+    if (argc == 2) {
+        cout << "Receiver waiting for a file on 127.0.0.1:" << PORT << "..." << endl;
+        bool received = receiveFile(receiverSocket, argv[1]);
+        closesocket(receiverSocket);
+        WSACleanup();
+        return received ? 0 : 1;
     }
 
     cout << "Receiver waiting on 127.0.0.1:" << PORT

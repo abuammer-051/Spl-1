@@ -5,13 +5,19 @@
 
 using namespace std;
 
+bool sendFile(SOCKET sock, const sockaddr_in& receiver, const char* path);
+
 int makePacket(char* buffer, int capacity, uint8_t type, uint32_t transferId,
                uint32_t sequence, const char* data, uint16_t dataLength);
 bool readPacket(const char* buffer, int packetLength, uint8_t& type,
                 uint32_t& transferId, uint32_t& sequence, char* data,
                 int capacity, uint16_t& dataLength);
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 1 && argc != 2) {
+        cerr << "Usage: sender [input file]\n";
+        return 1;
+    }
     constexpr unsigned short PORT = 5000;
     constexpr int BUFFER_SIZE = 1044;
 
@@ -43,6 +49,13 @@ int main() {
     receiverAddress.sin_family = AF_INET;
     receiverAddress.sin_port = htons(PORT);
     receiverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+    if (argc == 2) {
+        bool sent = sendFile(senderSocket, receiverAddress, argv[1]);
+        closesocket(senderSocket);
+        WSACleanup();
+        return sent ? 0 : 1;
+    }
 
     const char message[] = "Hello UDP";
     const uint16_t messageLength = static_cast<uint16_t>(sizeof(message) - 1);
