@@ -1,0 +1,332 @@
+SOFTWARE PROJECT LAB I
+PROPOSED ADDITIONAL FEATURES FOR SUPERVISOR REVIEW
+============================================================
+
+Project Title : Reliable UDP File Transfer
+Student Name  : Abu Ammer
+Student Roll  : bsse1724
+Supervisor    : Dr. Md. Shariful Islam
+Institute     : Institute of Information Technology
+University    : University of Dhaka
+
+
+1. PURPOSE OF THE PROPOSED EXTENSION
+------------------------------------------------------------
+
+Following feedback that the project requires additional user-facing
+functionality, I propose the following possible extensions to the
+Reliable UDP File Transfer application. The objective is to build on
+the existing project concept and provide practical functions beyond
+transferring a single file between two computers.
+
+This document lists alternative features for discussion and selection.
+It is not a commitment to implement all features. The final scope will
+be determined with the supervisor based on usefulness, feasibility,
+and the available project time. Repeated suggestions have been combined.
+
+
+2. CORE PROJECT TO BE RETAINED
+------------------------------------------------------------
+
+The application will use C++ and UDP sockets to transfer binary files.
+The initial protocol will use Stop-and-Wait, sequence numbers,
+acknowledgements, a manually implemented checksum or CRC, timeouts,
+retransmission, duplicate handling, and a retry limit. The received file
+will be checked for completeness and verified using an approved digest.
+
+The additional features will reuse this transfer mechanism. Reliability
+does not guarantee completion during a permanent network failure, and
+UDP is not assumed to make the application faster than TCP.
+
+
+3. PROPOSED ADDITIONAL FEATURES
+------------------------------------------------------------
+
+3.1 MULTIPLE-FILE QUEUE AND PRIORITY-BASED TRANSFER
+
+Functionality:
+Users can add several files to a transfer queue, view or remove pending
+items, and assign priorities. Each file will show a status such as
+Pending, Sending, Completed, or Failed.
+
+Implementation and boundary:
+Implement the queue using an array or linked list and order pending
+files using a manually written scheduling or sorting algorithm.
+Transfer one file at a time. Priority changes will affect pending files
+without interrupting the active transfer.
+
+Benefit:
+Users can prepare several transfers together and send important files
+before less urgent ones.
+
+
+3.2 SHARED FILE LIST, SEARCH, AND SELECTIVE DOWNLOAD
+
+Functionality:
+A client can view the files offered by another computer, search by
+filename, and request a selected file for download.
+
+Implementation and boundary:
+Provide list, search, and download commands. Implement filename matching
+manually and use file IDs in download requests. Initially, expose one
+designated shared folder and serve one client at a time. Reject requests
+that attempt to access files outside the shared folder.
+
+Benefit:
+Users can choose available files remotely instead of asking the sender
+to initiate every transfer.
+
+
+3.3 INTERRUPTED TRANSFER RESUME
+
+Functionality:
+A transfer interrupted by a connection failure or application restart
+can continue from a saved checkpoint instead of starting again.
+
+Implementation and boundary:
+Store the partial file and checkpoint metadata on disk. Identify the
+last safely written chunk and verify that the source file has not
+changed before resuming. Restart the transfer if the checkpoint cannot
+be validated.
+
+Benefit:
+Reduces repeated transmission of data after an interruption.
+
+Scope note:
+Resume was already listed as an extension option in the original
+project specification. Its suitability as additional scope requires
+the supervisor's confirmation.
+
+
+3.4 DUPLICATE FILE DETECTION AND NAME-CONFLICT HANDLING
+
+Functionality:
+Skip a transfer when an identical file is already present. If a file has
+the same name but different content, let the user replace it, save it
+under another name, or cancel the transfer.
+
+Implementation and boundary:
+Compare file size and an approved digest rather than relying on the
+filename alone. Receive replacements into a temporary file and replace
+the existing file only after successful verification.
+
+Benefit:
+Avoids unnecessary transfers and accidental overwriting.
+
+
+3.5 ONE-TO-MANY FILE DELIVERY
+
+Functionality:
+Send a selected file to multiple receiver computers and show a separate
+delivery status for each receiver. Allow retries for failed recipients.
+
+Implementation and boundary:
+Maintain a receiver list and separate transfer records. Reuse the
+single-receiver protocol sequentially, with one receiver served at a
+time. Match acknowledgements to the correct endpoint and transfer ID.
+Simultaneous transfers and multicast file delivery are outside the
+initial scope.
+
+Benefit:
+Supports distribution of the same document or lab material to several
+computers without repeatedly configuring each transfer.
+
+
+3.6 FILE VERSION HISTORY AND RESTORE
+
+Functionality:
+Preserve previous versions when a received file replaces an existing
+file. Users can list saved versions and restore an earlier version.
+
+Implementation and boundary:
+Maintain version metadata and keep up to three archived versions per
+file. Update the current file only after the new transfer passes
+verification. Initially, restoration will operate locally on the
+receiver, with confirmation before replacing the current version.
+
+Benefit:
+Allows recovery from an incorrect update or an unwanted replacement.
+
+
+3.7 RECEIVER-CONTROLLED FILE ACCEPTANCE
+
+Functionality:
+Before receiving file data, the receiver sees the proposed filename and
+size and can accept, reject, or select a destination. A configurable
+maximum file size can restrict incoming transfers.
+
+Implementation and boundary:
+Add a transfer-request and accept/reject exchange before sending data.
+The sender will report rejection or request timeout. Destination paths
+will be controlled by the receiver. Acceptance does not authenticate
+the sender or guarantee that the file is safe to open.
+
+Benefit:
+Gives users control over incoming files and storage use.
+
+
+3.8 ON-DEMAND FOLDER BACKUP
+
+Functionality:
+Back up files from a designated folder to another computer. Subsequent
+backup runs will transfer only new or changed files.
+
+Implementation and boundary:
+Compare a file manifest containing names, sizes, and approved digests.
+Use the reliable transfer mechanism for files that require an update.
+Initially, support a flat folder and a manually started backup command.
+Do not automatically delete backup files when source files disappear.
+Recursive folders, continuous monitoring, and two-way synchronization
+are outside the initial scope.
+
+Benefit:
+Provides a repeatable local-network backup operation while avoiding
+unnecessary retransmission of unchanged files.
+
+
+3.9 NEARBY DEVICE DISCOVERY
+
+Functionality:
+Display available computers running the application so the user can
+select a receiver without manually entering an IP address.
+
+Implementation and boundary:
+Implement UDP discovery requests and replies carrying a device label
+and service address. Initially, support a single local subnet and expire
+stale discovery records. Retain manual IP entry when discovery is blocked
+by network configuration or a firewall. Device labels will not be treated
+as verified identities.
+
+Benefit:
+Simplifies connection setup for users on a local network.
+
+
+3.10 SCHEDULED FILE TRANSFER
+
+Functionality:
+Users can choose a file and receiver in advance and specify when the
+transfer should begin. They can view, change, or cancel pending schedules.
+
+Implementation and boundary:
+Store schedules in a local file and check due tasks while the application
+is running. Recheck source-file availability at execution time. If the
+application is closed at the scheduled time, mark the task as missed and
+let the user decide whether to run it after restarting. Automatic computer
+wakeup and operating-system background services are outside the scope.
+
+Benefit:
+Allows users to prepare transfers for a convenient time.
+
+
+3.11 TRANSFER SPEED CONTROL
+
+Functionality:
+Users can set and change a maximum transfer rate, such as 500 KB/s,
+to reduce the bandwidth used by the application.
+
+Implementation and boundary:
+Use byte accounting and timing to pace outgoing packets. Count
+retransmitted data toward the configured sending limit. The limit is
+an upper bound on application sending rate, not a guaranteed transfer
+speed or a replacement for network congestion control.
+
+Benefit:
+Helps users share the network with other activities during a transfer.
+
+
+3.12 FILE TRANSFER WITH MESSAGES
+
+Functionality:
+Attach a short message or instruction to a transferred file. The
+receiver can send a reply, and the application can retain a small
+conversation history.
+
+Implementation and boundary:
+Add a message type, message IDs, acknowledgements, and duplicate
+suppression for messages. Store history in a local file and limit message
+length. Initially, support one sender and one receiver, without group
+chat, encryption, or cloud services.
+
+Benefit:
+Lets users explain the purpose of a file and confirm follow-up actions
+within the same application.
+
+
+3.13 ASSIGNMENT SUBMISSION MODE
+
+Functionality:
+A student submits a file with a name, roll number, and assignment title.
+The receiver stores the submission and returns a submission ID and
+receipt after successful file verification. A teacher can view received
+submissions and their on-time or late status.
+
+Implementation and boundary:
+Maintain submission metadata and separate storage locations. Use the
+receiver's clock and the verified completion time for deadline status.
+Map transfer IDs to submission records so repeated completion messages
+do not create duplicate submissions. Serve submissions sequentially.
+Without authentication, supplied names and roll numbers remain
+self-reported rather than verified identities.
+
+Benefit:
+Gives the project a specific educational use case with a record of each
+successfully received assignment.
+
+
+3.14 OPTIONAL FILE COMPRESSION
+
+Functionality:
+Optionally compress a file before transfer, decompress it on receipt,
+and display the original and transmitted sizes.
+
+Implementation and boundary:
+Implement Huffman coding manually, including the metadata needed for
+decoding. Send the original data when the compressed representation,
+including its metadata, is not smaller. Verify the reconstructed original
+file after decompression. Set an output-size limit when decoding.
+
+Benefit:
+Can reduce transmitted bytes for suitable input files. It will not
+necessarily reduce already compressed files or improve transfer time.
+This option requires more algorithmic work than most other additions.
+
+
+4. IMPLEMENTATION CONSTRAINTS
+------------------------------------------------------------
+
+- C++ will remain the primary implementation language.
+- Protocol logic, queue operations, searching, sorting, and any selected
+  compression algorithm will be implemented manually as required.
+- Only instructor-approved standard facilities and operating-system APIs
+  will be used for sockets, file access, directories, and timing.
+- No ready-made reliable UDP, transfer-management, or compression library
+  will replace the algorithms required to be implemented by the student.
+- The initial interface will remain command-line based.
+- Persistent records will use local files; a database is not required.
+- Testing will include ordinary operation, invalid input, interrupted
+  transfers, and the failure cases introduced by each selected feature.
+- Additional features will not remove the original reliability and
+  verification requirements or any mandatory approved extension.
+
+
+5. REQUEST FOR SCOPE APPROVAL
+------------------------------------------------------------
+
+I request the supervisor's guidance in selecting a feasible subset of
+these features. The approved additions will be incorporated into a
+revised proposal with clear implementation milestones and acceptance
+criteria. The project title may then be refined to reflect its selected
+application use case.
+
+Features selected for implementation:
+
+____________________________________________________________
+
+____________________________________________________________
+
+Supervisor's comments:
+
+____________________________________________________________
+
+____________________________________________________________
+
