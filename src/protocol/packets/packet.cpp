@@ -2,7 +2,7 @@
 
 using namespace std;
 
-uint32_t calculateCrc32(const char* data, int length);
+uint16_t calculateChecksum(const char* data, int length);
 
 static void write16(char* buffer, uint16_t value) {
     buffer[0] = static_cast<char>((value >> 8) & 0xffu);
@@ -33,7 +33,7 @@ static uint32_t read32(const char* buffer) {
 int makePacket(char* buffer, int capacity, uint8_t type, uint32_t transferId,
                uint32_t sequence, const char* data, uint16_t dataLength) {
     const int headerSize = 16;
-    const int checksumSize = 4;
+    const int checksumSize = 2;
     int packetLength = headerSize + dataLength + checksumSize;
 
     if (buffer == nullptr || capacity < packetLength || dataLength > 1024 ||
@@ -44,7 +44,7 @@ int makePacket(char* buffer, int capacity, uint8_t type, uint32_t transferId,
 
     buffer[0] = 'U';
     buffer[1] = 'F';
-    buffer[2] = 1;
+    buffer[2] = 2;
     buffer[3] = static_cast<char>(type);
     write32(buffer + 4, transferId);
     write32(buffer + 8, sequence);
@@ -55,8 +55,8 @@ int makePacket(char* buffer, int capacity, uint8_t type, uint32_t transferId,
         buffer[headerSize + i] = data[i];
     }
 
-    uint32_t checksum = calculateCrc32(buffer, headerSize + dataLength);
-    write32(buffer + headerSize + dataLength, checksum);
+    uint16_t checksum = calculateChecksum(buffer, headerSize + dataLength);
+    write16(buffer + headerSize + dataLength, checksum);
     return packetLength;
 }
 
@@ -64,14 +64,14 @@ bool readPacket(const char* buffer, int packetLength, uint8_t& type,
                 uint32_t& transferId, uint32_t& sequence, char* data,
                 int capacity, uint16_t& dataLength) {
     const int headerSize = 16;
-    const int checksumSize = 4;
+    const int checksumSize = 2;
 
     if (buffer == nullptr || packetLength < headerSize + checksumSize ||
         packetLength > headerSize + 1024 + checksumSize || capacity < 0) {
         return false;
     }
 
-    if (buffer[0] != 'U' || buffer[1] != 'F' || buffer[2] != 1 ||
+    if (buffer[0] != 'U' || buffer[1] != 'F' || buffer[2] != 2 ||
         read16(buffer + 14) != 0) {
         return false;
     }
@@ -85,8 +85,8 @@ bool readPacket(const char* buffer, int packetLength, uint8_t& type,
         return false;
     }
 
-    uint32_t checksum = read32(buffer + headerSize + length);
-    if (checksum != calculateCrc32(buffer, headerSize + length)) {
+    uint16_t checksum = read16(buffer + headerSize + length);
+    if (checksum != calculateChecksum(buffer, headerSize + length)) {
         return false;
     }
 

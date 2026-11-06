@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     constexpr unsigned short PORT = 5000;
-    constexpr int BUFFER_SIZE = 1044;
+    constexpr int BUFFER_SIZE = 1042;
 
     WSADATA winsockData{};
     int startupResult = WSAStartup(MAKEWORD(2, 2), &winsockData);

@@ -30,7 +30,7 @@ and the available project time. Repeated suggestions have been combined.
 
 The application will use C++ and UDP sockets to transfer binary files.
 The initial protocol will use Stop-and-Wait, sequence numbers,
-acknowledgements, a manually implemented checksum or CRC, timeouts,
+acknowledgements, a manually implemented checksum, timeouts,
 retransmission, duplicate handling, and a retry limit. The received file
 will be checked for completeness and verified using an approved digest.
 

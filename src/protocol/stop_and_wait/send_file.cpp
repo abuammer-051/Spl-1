@@ -8,11 +8,12 @@ using namespace std;
 
 int makePacket(char*, int, uint8_t, uint32_t, uint32_t, const char*, uint16_t);
 bool readPacket(const char*, int, uint8_t&, uint32_t&, uint32_t&, char*, int, uint16_t&);
-uint32_t updateCrc32(uint32_t, const char*, int);
+uint32_t updateChecksum(uint32_t, const char*, int, bool&);
+uint16_t finishChecksum(uint32_t);
 
 static bool sendAndWait(SOCKET sock, const sockaddr_in& receiver, uint8_t type,
  uint32_t id, uint32_t sequence, const char* data, uint16_t length, int& retries) {
- char packet[1044];
+ char packet[1042];
  int size = makePacket(packet, sizeof(packet), type, id, sequence, data, length);
  if (size == 0) return false;
 
@@ -42,7 +43,7 @@ static bool sendAndWait(SOCKET sock, const sockaddr_in& receiver, uint8_t type,
    if (result == SOCKET_ERROR) return false;
    if (result == 0) break;
 
-   char reply[1044], payload[1024];
+   char reply[1042], payload[1024];
    sockaddr_in peer{};
    int peerSize = sizeof(peer);
    int count = recvfrom(sock, reply, sizeof(reply), 0,
@@ -77,7 +78,8 @@ bool sendFile(SOCKET sock, const sockaddr_in& receiver, const char* path) {
 
  char data[1024];
  uint64_t fileSize = 0;
- uint32_t crc = 0xffffffffu;
+ uint32_t sum = 0;
+ bool odd = false;
  while (true) {
   file.read(data, sizeof(data));
   int count = static_cast<int>(file.gcount());
@@ -90,7 +92,7 @@ bool sendFile(SOCKET sock, const sockaddr_in& receiver, const char* path) {
    cerr << "Maximum file size is 1 GB\n";
    return false;
   }
-  crc = updateCrc32(crc, data, count);
+  sum = updateChecksum(sum, data, count, odd);
   if (file.eof()) break;
  }
 
@@ -98,10 +100,11 @@ bool sendFile(SOCKET sock, const sockaddr_in& receiver, const char* path) {
  file.seekg(0);
  if (!file) return false;
 
- char metadata[12];
+ char metadata[10];
  for (int i = 0; i < 8; i++) metadata[i] = static_cast<char>((fileSize >> (56 - 8 * i)) & 0xffu);
- crc = ~crc;
- for (int i = 0; i < 4; i++) metadata[8 + i] = static_cast<char>((crc >> (24 - 8 * i)) & 0xffu);
+ uint16_t checksum = finishChecksum(sum);
+ metadata[8] = static_cast<char>(checksum >> 8);
+ metadata[9] = static_cast<char>(checksum & 0xffu);
 
  uint32_t id = GetCurrentProcessId();
  uint32_t sequence = 0;
