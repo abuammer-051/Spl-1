@@ -4,9 +4,9 @@ using namespace std;
 
 uint16_t calculateChecksum(const char* data, int length);
 
-static void write16(char* buffer, uint16_t value) {
-    buffer[0] = static_cast<char>((value >> 8) & 0xffu);
-    buffer[1] = static_cast<char>(value & 0xffu);
+static void write16(char* buffer, uint16_t value) {     //1234
+    buffer[0] = static_cast<char>((value >> 8) & 0xffu);  //1200 after >> and 12 will goes into buffer[0];
+    buffer[1] = static_cast<char>(value & 0xffu); //34 will goes into buffer  1
 }
 
 static void write32(char* buffer, uint32_t value) {
@@ -17,9 +17,9 @@ static void write32(char* buffer, uint32_t value) {
 }
 
 static uint16_t read16(const char* buffer) {
-    uint16_t value = static_cast<unsigned char>(buffer[0]);
-    value = static_cast<uint16_t>(value << 8);
-    return static_cast<uint16_t>(value | static_cast<unsigned char>(buffer[1]));
+    uint16_t value = static_cast<unsigned char>(buffer[0]);          //12
+    value = static_cast<uint16_t>(value << 8);                      //0034
+    return static_cast<uint16_t>(value | static_cast<unsigned char>(buffer[1]));        //1234
 }
 
 static uint32_t read32(const char* buffer) {
